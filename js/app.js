@@ -9,10 +9,10 @@
     { path: '#/login', screen: 'LoginScreen' },
     { path: '#/dashboard', screen: 'DashboardScreen' },
     { path: '#/cases', screen: 'CaseListScreen' },
-    { path: '#/cases/new', screen: 'AddCaseScreen' },
-    { path: '#/cases/:caseId/edit', screen: 'EditCaseScreen' },
-    { path: '#/cases/:caseId/proceedings/new', screen: 'AddProceedingsScreen' },
-    { path: '#/cases/:caseId/compliance/new', screen: 'AddComplianceScreen' },
+    { path: '#/cases/new', screen: 'CaseFormScreen' },
+    { path: '#/cases/:caseId/edit', screen: 'CaseFormScreen' },
+    { path: '#/cases/:caseId/proceedings/new', screen: 'ProceedingsFormScreen' },
+    { path: '#/cases/:caseId/compliance/new', screen: 'ComplianceFormScreen' },
     { path: '#/cases/:caseId', screen: 'CaseDetailScreen' },
     { path: '#/search', screen: 'SearchScreen' },
     { path: '#/settings', screen: 'SettingsScreen' }
@@ -220,7 +220,7 @@
   /* ─── Router ─── */
   function handleRoute() {
     var hash = window.location.hash || '';
-    var isAuthenticated = window.Auth && window.Auth.isAuthenticated ? window.Auth.isAuthenticated() : false;
+    var isAuthenticated = window.Auth && window.Auth.getCurrentRole ? !!window.Auth.getCurrentRole() : false;
 
     // Redirect logic
     if (!isAuthenticated && hash !== '#/login') {
@@ -243,7 +243,8 @@
     if (screenModule && typeof screenModule.render === 'function') {
       var appContent = document.getElementById('app-content');
       if (appContent) appContent.innerHTML = '';
-      screenModule.render(matched.params);
+      var caseId = matched.params && matched.params.caseId ? matched.params.caseId : null;
+      screenModule.render(appContent, caseId);
     }
 
     // Update navigation
@@ -261,7 +262,8 @@
   /* ─── Service Worker Registration ─── */
   function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+      var swPath = (window.location.pathname.includes('/deo-legal-cases') ? '/deo-legal-cases/' : '/') + 'sw.js';
+      navigator.serviceWorker.register(swPath).then(function (reg) {
         console.log('[App] Service Worker registered, scope:', reg.scope);
       }).catch(function (err) {
         console.warn('[App] Service Worker registration failed:', err);
@@ -290,12 +292,8 @@
         await window.Sync.init();
       }
 
-      // 5. Initialize notifications
-      if (window.Notifications && window.Notifications.init) {
-        await window.Notifications.init();
-      }
-
-      // 6. Set up the router
+      // 5. Set up the router FIRST (so app is interactive immediately)
+      // Notifications will be initialized after login
       window.addEventListener('hashchange', handleRoute);
       handleRoute();
 

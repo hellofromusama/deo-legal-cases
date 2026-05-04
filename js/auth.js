@@ -66,15 +66,18 @@
 
     // Store in Firestore
     try {
-      const db = window.FirebaseApp.firestore();
-      await db.collection('settings').doc('app').set(pinData, { merge: true });
+      if (window.FirebaseApp && window.FirebaseApp.saveSettings) {
+        await window.FirebaseApp.saveSettings(pinData);
+      }
     } catch (err) {
       console.warn('Auth: Failed to store PINs in Firestore (offline?)', err);
     }
 
     // Store in IndexedDB for offline access
     try {
-      await window.DB.put('settings', { id: 'pinConfig', ...pinData });
+      if (window.DB && window.DB.setSetting) {
+        await window.DB.setSetting('pinConfig', pinData);
+      }
     } catch (err) {
       console.warn('Auth: Failed to store PINs in IndexedDB', err);
     }
@@ -95,10 +98,11 @@
 
     // Try Firestore first
     try {
-      const db = window.FirebaseApp.firestore();
-      const doc = await db.collection('settings').doc('app').get();
-      if (doc.exists) {
-        storedHash = doc.data()[hashField];
+      if (window.FirebaseApp && window.FirebaseApp.getSettings) {
+        const settings = await window.FirebaseApp.getSettings();
+        if (settings) {
+          storedHash = settings[hashField];
+        }
       }
     } catch (err) {
       console.warn('Auth: Firestore unavailable, falling back to IndexedDB', err);
@@ -107,9 +111,11 @@
     // Fallback to IndexedDB if Firestore failed
     if (!storedHash) {
       try {
-        const localConfig = await window.DB.get('settings', 'pinConfig');
-        if (localConfig) {
-          storedHash = localConfig[hashField];
+        if (window.DB && window.DB.getSetting) {
+          const localConfig = await window.DB.getSetting('pinConfig');
+          if (localConfig) {
+            storedHash = localConfig[hashField];
+          }
         }
       } catch (err) {
         console.error('Auth: Failed to read PIN from IndexedDB', err);
@@ -123,7 +129,9 @@
 
     // Create Firebase anonymous auth session
     try {
-      await window.FirebaseApp.auth().signInAnonymously();
+      if (window.FirebaseApp && window.FirebaseApp.signInAnonymously) {
+        await window.FirebaseApp.signInAnonymously();
+      }
     } catch (err) {
       console.warn('Auth: Firebase anonymous sign-in failed (offline?)', err);
     }
@@ -179,7 +187,9 @@
   function logout() {
     localStorage.removeItem(SESSION_KEY);
     try {
-      window.FirebaseApp.auth().signOut();
+      if (window.FirebaseApp && window.FirebaseApp.signOut) {
+        window.FirebaseApp.signOut();
+      }
     } catch (err) {
       // Ignore sign-out errors (e.g., offline)
     }
@@ -192,9 +202,11 @@
   async function isSetupRequired() {
     // Check IndexedDB first (faster, works offline)
     try {
-      const localConfig = await window.DB.get('settings', 'pinConfig');
-      if (localConfig && localConfig.adminPinHash && localConfig.viewerPinHash) {
-        return false;
+      if (window.DB && window.DB.getSetting) {
+        const localConfig = await window.DB.getSetting('pinConfig');
+        if (localConfig && localConfig.adminPinHash && localConfig.viewerPinHash) {
+          return false;
+        }
       }
     } catch (err) {
       console.warn('Auth: IndexedDB check failed', err);
@@ -202,19 +214,18 @@
 
     // Check Firestore
     try {
-      const db = window.FirebaseApp.firestore();
-      const doc = await db.collection('settings').doc('app').get();
-      if (doc.exists) {
-        const data = doc.data();
-        if (data.adminPinHash && data.viewerPinHash) {
+      if (window.FirebaseApp && window.FirebaseApp.getSettings) {
+        const data = await window.FirebaseApp.getSettings();
+        if (data && data.adminPinHash && data.viewerPinHash) {
           // Cache in IndexedDB for offline use
           try {
-            await window.DB.put('settings', {
-              id: 'pinConfig',
-              adminPinHash: data.adminPinHash,
-              viewerPinHash: data.viewerPinHash,
-              updatedAt: data.updatedAt || new Date().toISOString()
-            });
+            if (window.DB && window.DB.setSetting) {
+              await window.DB.setSetting('pinConfig', {
+                adminPinHash: data.adminPinHash,
+                viewerPinHash: data.viewerPinHash,
+                updatedAt: data.updatedAt || new Date().toISOString()
+              });
+            }
           } catch (cacheErr) {
             console.warn('Auth: Failed to cache PINs in IndexedDB', cacheErr);
           }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'deo-legal-v1';
+const CACHE_NAME = 'deo-legal-v2';
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const PRECACHE_URLS = [
   './js/sync.js',
   './js/notifications.js',
   './js/pdf.js',
+  './js/screens/login.js',
   './js/screens/dashboard.js',
   './js/screens/case-list.js',
   './js/screens/case-form.js',
