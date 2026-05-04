@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1B3A6B">
+  <title>DEO Muzaffarabad — Legal Cases</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS PWA Support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DEO Legal">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/app.css">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- CDN Dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- Firebase Config (must load synchronously before module script) -->
+  <script src="firebase-config.js"></script>
+  <script>window.FIREBASE_CONFIG = FIREBASE_CONFIG;</script>
+
+  <!-- Firebase v10 Modular SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getFirestore, doc, collection, getDoc, setDoc, getDocs, query, where, orderBy, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+    // Import config
+    const config = window.FIREBASE_CONFIG || {};
+
+    // Only initialize if config is set
+    if (config.apiKey && config.apiKey !== "REPLACE_WITH_YOUR_API_KEY") {
+      const app = initializeApp(config);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+
+      // Expose to window for non-module scripts
+      window.firebaseApp = app;
+      window.firebaseDb = db;
+      window.firebaseAuth = auth;
+      window.firestoreDoc = doc;
+      window.firestoreCollection = collection;
+      window.firestoreGetDoc = getDoc;
+      window.firestoreSetDoc = setDoc;
+      window.firestoreGetDocs = getDocs;
+      window.firestoreQuery = query;
+      window.firestoreWhere = where;
+      window.firestoreOrderBy = orderBy;
+      window.firestoreDeleteDoc = deleteDoc;
+      window.firebaseSignInAnonymously = signInAnonymously;
+      window.firebaseSignOut = signOut;
+      window.firebaseOnAuthStateChanged = onAuthStateChanged;
+
+      window.firebaseReady = true;
+    } else {
+      window.firebaseReady = false;
+      console.warn('Firebase not configured. App will work in offline-only mode.');
+    }
+
+    // Signal that Firebase module has loaded
+    window.dispatchEvent(new Event('firebase-loaded'));
+  </script>
+</head>
+<body>
+
+  <!-- Viewer Mode Banner -->
+  <div id="viewer-banner" hidden>Viewing as DEO (Read Only) | صرف مشاہدہ (ڈی ای او)</div>
+
+  <!-- Sync Status Indicator -->
+  <div id="sync-status"></div>
+
+  <!-- Main Content Area -->
+  <main id="app-content"></main>
+
+  <!-- Bottom Navigation Bar -->
+  <nav id="bottom-nav" hidden></nav>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" hidden></div>
+
+  <!-- Confirm Dialog Overlay -->
+  <div id="confirm-overlay" hidden></div>
+
+  <!-- Application Scripts -->
+  <script defer src="js/db.js"></script>
+  <script defer src="js/firebase.js"></script>
+  <script defer src="js/auth.js"></script>
+  <script defer src="js/sync.js"></script>
+  <script defer src="js/notifications.js"></script>
+  <script defer src="js/pdf.js"></script>
+  <script defer src="js/screens/dashboard.js"></script>
+  <script defer src="js/screens/case-list.js"></script>
+  <script defer src="js/screens/case-form.js"></script>
+  <script defer src="js/screens/case-detail.js"></script>
+  <script defer src="js/screens/proceedings-form.js"></script>
+  <script defer src="js/screens/compliance.js"></script>
+  <script defer src="js/screens/search.js"></script>
+  <script defer src="js/screens/settings.js"></script>
+  <script defer src="js/app.js"></script>
+
+  <!-- Bootstrap: wait for both DOMContentLoaded and firebase-loaded -->
+  <script>
+    (function() {
+      var domReady = false;
+      var firebaseLoaded = false;
+
+      function tryInit() {
+        if (domReady && firebaseLoaded && window.App && window.App.init) {
+          window.App.init();
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        domReady = true;
+        tryInit();
+      });
+
+      window.addEventListener('firebase-loaded', function() {
+        firebaseLoaded = true;
+        tryInit();
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate PWA Icons - Naeem DEO</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            min-height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            color: #C8962E;
+            margin-bottom: 10px;
+        }
+        p.instructions {
+            max-width: 600px;
+            text-align: center;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #aaa;
+        }
+        .icon-container {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .icon-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .icon-box canvas {
+            border: 2px solid #333;
+            border-radius: 12px;
+        }
+        .icon-box label {
+            font-size: 14px;
+            color: #888;
+        }
+        button {
+            background: #C8962E;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:hover {
+            background: #a87a24;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px 25px;
+            background: #16213e;
+            border-radius: 8px;
+            border: 1px solid #1B3A6B;
+            max-width: 600px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>PWA Icon Generator</h1>
+    <p class="instructions">
+        This page generates the PWA icons for the Naeem DEO application.<br>
+        Click the download buttons to save each icon, then place them in the <code>icons/</code> folder as <code>icon-192.png</code> and <code>icon-512.png</code>.
+    </p>
+
+    <div class="icon-container">
+        <div class="icon-box">
+            <label>512 x 512</label>
+            <canvas id="canvas512" width="512" height="512"></canvas>
+            <button onclick="download('canvas512', 'icon-512.png')">Download icon-512.png</button>
+        </div>
+        <div class="icon-box">
+            <label>192 x 192</label>
+            <canvas id="canvas192" width="192" height="192"></canvas>
+            <button onclick="download('canvas192', 'icon-192.png')">Download icon-192.png</button>
+        </div>
+    </div>
+
+    <button onclick="downloadBoth()">Download Both Icons</button>
+
+    <div class="status" id="status">
+        Icons generated. Click the buttons above to download them.
+    </div>
+
+    <script>
+        function drawIcon(canvas) {
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            const scale = size / 512;
+
+            // Background - rounded rectangle
+            ctx.fillStyle = '#1B3A6B';
+            roundRect(ctx, 0, 0, size, size, 64 * scale);
+            ctx.fill();
+
+            // Draw scales of justice in gold
+            ctx.strokeStyle = '#C8962E';
+            ctx.fillStyle = '#C8962E';
+            ctx.lineWidth = 6 * scale;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            const cx = size / 2;
+            const topY = 100 * scale;
+
+            // Vertical pole
+            ctx.beginPath();
+            ctx.moveTo(cx, topY);
+            ctx.lineTo(cx, 320 * scale);
+            ctx.stroke();
+
+            // Base
+            ctx.beginPath();
+            ctx.moveTo(cx - 60 * scale, 320 * scale);
+            ctx.lineTo(cx + 60 * scale, 320 * scale);
+            ctx.lineTo(cx + 40 * scale, 340 * scale);
+            ctx.lineTo(cx - 40 * scale, 340 * scale);
+            ctx.closePath();
+            ctx.fill();
+
+            // Horizontal beam
+            const beamY = topY + 20 * scale;
+            const beamHalf = 120 * scale;
+            ctx.beginPath();
+            ctx.moveTo(cx - beamHalf, beamY);
+            ctx.lineTo(cx + beamHalf, beamY);
+            ctx.stroke();
+
+            // Top circle/finial
+            ctx.beginPath();
+            ctx.arc(cx, topY, 12 * scale, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Left pan
+            drawPan(ctx, cx - beamHalf, beamY, scale);
+
+            // Right pan
+            drawPan(ctx, cx + beamHalf, beamY, scale);
+
+            // "DEO" text at the bottom
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = `bold ${72 * scale}px 'Segoe UI', sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('DEO', cx, 410 * scale);
+        }
+
+        function drawPan(ctx, x, topY, scale) {
+            const chainLen = 60 * scale;
+            const panWidth = 50 * scale;
+            const panDepth = 20 * scale;
+
+            // Chains (two lines)
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x - panWidth * 0.6, topY + chainLen);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x + panWidth * 0.6, topY + chainLen);
+            ctx.stroke();
+
+            // Pan (curved bowl shape)
+            ctx.beginPath();
+            ctx.moveTo(x - panWidth, topY + chainLen);
+            ctx.quadraticCurveTo(x, topY + chainLen + panDepth * 2, x + panWidth, topY + chainLen);
+            ctx.stroke();
+
+            // Horizontal line at top of pan
+            ctx.beginPath();
+            ctx.moveTo(x - panWidth, topY + chainLen);
+            ctx.lineTo(x + panWidth, topY + chainLen);
+            ctx.stroke();
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function download(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            document.getElementById('status').textContent = `Downloaded ${filename}. Save it to the icons/ folder.`;
+        }
+
+        function downloadBoth() {
+            download('canvas512', 'icon-512.png');
+            setTimeout(() => download('canvas192', 'icon-192.png'), 500);
+        }
+
+        // Draw both icons on load
+        drawIcon(document.getElementById('canvas512'));
+        drawIcon(document.getElementById('canvas192'));
+    </script>
+</body>
+</html>
