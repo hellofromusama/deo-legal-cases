@@ -216,7 +216,10 @@
 
   async function attemptSync() {
     if (syncInProgress) return;
-    if (!navigator.onLine) {
+    // Note: navigator.onLine is unreliable on mobile Safari
+    // We'll try to sync anyway and let the actual network call fail gracefully
+    if (!window.firebaseReady) {
+      // Firebase not configured at all - truly offline-only mode
       dispatchSyncEvent({ action: 'offline' });
       return;
     }

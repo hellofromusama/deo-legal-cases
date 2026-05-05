@@ -81,6 +81,13 @@
     } catch (err) {
       console.warn('Auth: Failed to store PINs in IndexedDB', err);
     }
+
+    // Also store in localStorage as fallback (iOS Safari can lose IndexedDB in PWA mode)
+    try {
+      localStorage.setItem('deo_pin_config', JSON.stringify(pinData));
+    } catch (err) {
+      console.warn('Auth: Failed to store PINs in localStorage', err);
+    }
   }
 
   /**
@@ -118,7 +125,22 @@
           }
         }
       } catch (err) {
-        console.error('Auth: Failed to read PIN from IndexedDB', err);
+        console.warn('Auth: Failed to read PIN from IndexedDB', err);
+      }
+    }
+
+    // Fallback to localStorage (iOS Safari PWA reliability)
+    if (!storedHash) {
+      try {
+        const lsConfig = localStorage.getItem('deo_pin_config');
+        if (lsConfig) {
+          const parsed = JSON.parse(lsConfig);
+          if (parsed) {
+            storedHash = parsed[hashField];
+          }
+        }
+      } catch (err) {
+        console.error('Auth: Failed to read PIN from localStorage', err);
         return false;
       }
     }
@@ -200,11 +222,26 @@
    * @returns {Promise<boolean>} True if setup is required (no PINs found)
    */
   async function isSetupRequired() {
-    // Check IndexedDB first (faster, works offline)
+    // Check localStorage first (most reliable on iOS Safari PWA)
+    try {
+      const lsConfig = localStorage.getItem('deo_pin_config');
+      if (lsConfig) {
+        const parsed = JSON.parse(lsConfig);
+        if (parsed && parsed.adminPinHash && parsed.viewerPinHash) {
+          return false;
+        }
+      }
+    } catch (err) {
+      console.warn('Auth: localStorage check failed', err);
+    }
+
+    // Check IndexedDB
     try {
       if (window.DB && window.DB.getSetting) {
         const localConfig = await window.DB.getSetting('pinConfig');
         if (localConfig && localConfig.adminPinHash && localConfig.viewerPinHash) {
+          // Backup to localStorage for iOS
+          try { localStorage.setItem('deo_pin_config', JSON.stringify(localConfig)); } catch(e) {}
           return false;
         }
       }

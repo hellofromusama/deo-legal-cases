@@ -299,12 +299,22 @@
 
       // 7. Listen for sync status changes
       window.addEventListener('sync-status-changed', function (e) {
-        var status = e.detail && e.detail.status ? e.detail.status : 'offline';
+        var action = e.detail && e.detail.action ? e.detail.action : '';
+        var status = 'synced';
+        if (action === 'offline') status = 'offline';
+        else if (action === 'sync-start' || action === 'syncing') status = 'syncing';
+        else if (action === 'sync-error' || action === 'push-failed' || action === 'pull-failed') status = 'error';
+        else if (action === 'sync-complete') status = 'synced';
+        else if (action === 'queued') status = 'syncing';
         renderSyncStatus(status);
       });
 
-      // Initial sync status
-      renderSyncStatus('synced');
+      // Initial sync status - check actual connectivity
+      if (!window.firebaseReady) {
+        renderSyncStatus('offline');
+      } else {
+        renderSyncStatus(navigator.onLine ? 'synced' : 'offline');
+      }
 
       console.log('[App] Initialized successfully');
     } catch (err) {
